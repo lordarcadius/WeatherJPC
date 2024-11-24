@@ -21,23 +21,13 @@ import com.vipuljha.weatherjpc.models.WeatherModel
 import com.vipuljha.weatherjpc.utils.NetworkResponse
 import com.vipuljha.weatherjpc.utils.Utils
 import com.vipuljha.weatherjpc.viewmodels.WeatherViewModel
-import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
 @Composable
 fun WeatherPage(viewModel: WeatherViewModel) {
     var city by remember { mutableStateOf("New Delhi") }
-    var debounceCity by remember { mutableStateOf(city) } // To track debounced input
     val keyboardController = LocalSoftwareKeyboardController.current
     val weatherState by viewModel.weather.collectAsState()
-
-    // Debounce logic
-    LaunchedEffect(debounceCity) {
-        delay(500) // Wait for 500ms before making the API call
-        if (debounceCity.isNotEmpty()) {
-            viewModel.getWeather(debounceCity)
-        }
-    }
 
     Column(
         modifier = Modifier
@@ -47,9 +37,9 @@ fun WeatherPage(viewModel: WeatherViewModel) {
     ) {
         CitySearchField(city = city, onCityChanged = {
             city = it
-            debounceCity = it // Update the debounced value
+            viewModel.updateCity(city)
         }) {
-            debounceCity = city // Trigger immediate search on button click
+            viewModel.updateCity(city)
             keyboardController?.hide()
         }
 
@@ -145,9 +135,9 @@ fun WeatherDetails(data: WeatherModel) {
             textAlign = TextAlign.Center
         )
 
-        Spacer(Modifier.height(16.dp))
-
         WeatherDetailsCard(data)
+
+        Spacer(Modifier.height(16.dp))
     }
 }
 
@@ -217,7 +207,7 @@ fun CurrentWeatherItems(title: String, data: String) {
         modifier = Modifier.padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = data, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-        Text(text = title, fontWeight = FontWeight.SemiBold, color = Color.Gray)
+        Text(text = data, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        Text(text = title, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color.Gray)
     }
 }

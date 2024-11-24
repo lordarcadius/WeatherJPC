@@ -5,36 +5,43 @@ import androidx.lifecycle.viewModelScope
 import com.vipuljha.weatherjpc.data.repositories.WeatherRepository
 import com.vipuljha.weatherjpc.models.WeatherModel
 import com.vipuljha.weatherjpc.utils.NetworkResponse
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import retrofit2.Response
 
+@OptIn(FlowPreview::class)
 class WeatherViewModel(private val repository: WeatherRepository) : ViewModel() {
 
     private val _weather =
         MutableStateFlow<NetworkResponse<WeatherModel>>(NetworkResponse.Loading)
-
     val weather: StateFlow<NetworkResponse<WeatherModel>> = _weather
 
+    private val _city = MutableStateFlow("New Delhi")
 
-    fun getWeather(keyword: String) = viewModelScope.launch {
-        _weather.value = NetworkResponse.Loading
-        try {
-            val response = repository.getWeather(keyword)
-            _weather.value = handleResponse(response)
-        } catch (e: Exception) {
-            _weather.value = NetworkResponse.Error(message = e.message ?: "Something went wrong!")
-        }
+    init {
+        // Fetch data for the default city on app launch
+        fetchWeather("New Delhi")
+
+        // Debounced API call for user interactions
+        _city
+            .debounce(500) // Wait 500ms after user stops typing
+            .distinctUntilChanged() // Avoid duplicate API calls
+            .filter { it != "New Delhi" } // Avoid triggering for initial default city
+            .onEach { city ->
+                fetchWeather(city)
+            }
+            .launchIn(viewModelScope)
     }
 
-    private fun handleResponse(response: Response<WeatherModel>): NetworkResponse<WeatherModel> {
-        if (response.isSuccessful) {
-            response.body()?.let {
-                return NetworkResponse.Success(it)
-            } ?: return NetworkResponse.Error(message = "No data found")
-        } else {
-            return NetworkResponse.Error(message = response.message())
+    fun updateCity(city: String) {
+        _city.value = city
+    }
+
+    private fun fetchWeather(city: String) {
+        viewModelScope.launch {
+            repository.getWeather(city).collect { response ->
+                _weather.value = response
+            }
         }
     }
 }
