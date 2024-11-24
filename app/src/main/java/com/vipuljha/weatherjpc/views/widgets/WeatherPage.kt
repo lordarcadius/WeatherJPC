@@ -1,32 +1,11 @@
 package com.vipuljha.weatherjpc.views.widgets
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -46,15 +25,12 @@ import kotlin.math.roundToInt
 
 @Composable
 fun WeatherPage(viewModel: WeatherViewModel) {
-    var city by remember {
-        mutableStateOf("New Delhi")
-    }
+    var city by remember { mutableStateOf("New Delhi") }
     val keyboardController = LocalSoftwareKeyboardController.current
     val weatherState by viewModel.weather.collectAsState()
 
-    LaunchedEffect(city) {
-        viewModel.getWeather(city)
-    }
+    // Automatically load weather on launch
+    LaunchedEffect(city) { viewModel.getWeather(city) }
 
     Column(
         modifier = Modifier
@@ -62,60 +38,72 @@ fun WeatherPage(viewModel: WeatherViewModel) {
             .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            OutlinedTextField(
-                modifier = Modifier.weight(1f),
-                maxLines = 1,
-                value = city,
-                onValueChange = {
-                    city = it
-                },
-                label = {
-                    Text(stringResource(R.string.search_city))
-                }
-            )
-            Spacer(Modifier.width(20.dp))
-            IconButton(onClick = {
-                viewModel.getWeather(city)
-                keyboardController?.hide()
-            }) {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    modifier = Modifier.size(40.dp),
-                    contentDescription = stringResource(R.string.search)
-                )
-            }
+        CitySearchField(city = city, onCityChanged = {
+            city = it
+        }) {
+            viewModel.getWeather(city)
+            keyboardController?.hide()
         }
+
+        Spacer(Modifier.height(8.dp))
+
         when (weatherState) {
-            is NetworkResponse.Loading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-
-            is NetworkResponse.Success -> {
-                val weather = (weatherState as NetworkResponse.Success<WeatherModel>).data
-                WeatherDetails(weather)
-            }
-
-            is NetworkResponse.Error -> {
-                val errorMessage = (weatherState as NetworkResponse.Error).message
-                Text(
-                    text = "Error: $errorMessage",
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+            is NetworkResponse.Loading -> LoadingIndicator()
+            is NetworkResponse.Success -> WeatherDetails((weatherState as NetworkResponse.Success<WeatherModel>).data)
+            is NetworkResponse.Error -> ErrorMessage((weatherState as NetworkResponse.Error).message)
         }
     }
+}
+
+@Composable
+fun CitySearchField(
+    city: String,
+    onCityChanged: (String) -> Unit,
+    onSearchClicked: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        OutlinedTextField(
+            modifier = Modifier.weight(1f),
+            value = city,
+            onValueChange = onCityChanged,
+            maxLines = 1,
+            label = { Text(stringResource(R.string.search_city)) }
+        )
+        Spacer(Modifier.width(20.dp))
+        IconButton(onClick = onSearchClicked) {
+            Icon(
+                imageVector = Icons.Default.Search,
+                modifier = Modifier.size(40.dp),
+                contentDescription = stringResource(R.string.search)
+            )
+        }
+    }
+}
+
+@Composable
+fun LoadingIndicator() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator()
+    }
+}
+
+@Composable
+fun ErrorMessage(message: String) {
+    Text(
+        text = "Error: $message",
+        color = Color.Red,
+        modifier = Modifier.fillMaxWidth(),
+        textAlign = TextAlign.Center
+    )
 }
 
 @Composable
@@ -127,74 +115,91 @@ fun WeatherDetails(data: WeatherModel) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceEvenly
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Start,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = Icons.Default.LocationOn,
-                contentDescription = "Location Icon",
-                modifier = Modifier.size(40.dp)
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(text = data.location.name, fontSize = 30.sp)
-            Spacer(modifier = Modifier.width(10.dp))
-            Text(text = data.location.country, fontSize = 18.sp, color = Color.Gray)
-        }
-        Spacer(modifier = Modifier.height(16.dp))
+        LocationRow(data.location.name, data.location.country)
+
         Text(
-            text = "${data.current.temp_c.roundToInt()}  °C",
+            text = "${data.current.temp_c.roundToInt()} °C",
             fontSize = 60.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
         )
+
         AsyncImage(
-            modifier = Modifier.size(160.dp),
             model = "https:${data.current.condition.icon}".replace("64x64", "128x128"),
-            contentDescription = "Condition icon"
+            contentDescription = "Condition icon",
+            modifier = Modifier.size(160.dp)
         )
+
         Text(
             text = data.current.condition.text,
             fontSize = 20.sp,
-            textAlign = TextAlign.Center,
-            color = Color.Gray
+            color = Color.Gray,
+            textAlign = TextAlign.Center
         )
-        Spacer(modifier = Modifier.height(16.dp))
-        Card {
-            Column(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceAround
-                ) {
-                    CurrentWeatherItems(
-                        "AQI",
-                        data.current.air_quality.pm2_5.roundToInt().toString()
-                    )
-                    CurrentWeatherItems("Humidity", "${data.current.humidity}%")
-                    CurrentWeatherItems("Wind Speed", "${data.current.wind_kph.roundToInt()} km/h")
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceAround
-                ) {
-                    CurrentWeatherItems("UV", Utils.getUVIndex(data.current.uv))
-                    CurrentWeatherItems("Precipitation", "${data.current.precip_mm} mm")
-                    CurrentWeatherItems("Pressure", "${data.current.pressure_mb} mb")
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceAround
-                ) {
-                    CurrentWeatherItems("Visibility", "${data.current.vis_km} km")
-                    CurrentWeatherItems("Time", data.location.localtime.split(" ")[1])
-                    CurrentWeatherItems("Date", data.location.localtime.split(" ")[0])
-                }
-            }
+
+        Spacer(Modifier.height(16.dp))
+
+        WeatherDetailsCard(data)
+    }
+}
+
+@Composable
+fun LocationRow(name: String, country: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Start,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.Default.LocationOn,
+            contentDescription = "Location Icon",
+            modifier = Modifier.size(40.dp)
+        )
+        Spacer(Modifier.width(12.dp))
+        Text(text = name, fontSize = 30.sp, fontWeight = FontWeight.SemiBold)
+        Spacer(Modifier.width(10.dp))
+        Text(text = country, fontSize = 18.sp, color = Color.Gray)
+    }
+}
+
+@Composable
+fun WeatherDetailsCard(data: WeatherModel) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column {
+            WeatherDetailsRow(
+                items = listOf(
+                    "AQI" to data.current.air_quality.pm2_5.roundToInt().toString(),
+                    "Humidity" to "${data.current.humidity}%",
+                    "Wind Speed" to "${data.current.wind_kph.roundToInt()} km/h"
+                )
+            )
+            WeatherDetailsRow(
+                items = listOf(
+                    "UV" to Utils.getUVIndex(data.current.uv),
+                    "Precipitation" to "${data.current.precip_mm} mm",
+                    "Pressure" to "${data.current.pressure_mb} mb"
+                )
+            )
+            WeatherDetailsRow(
+                items = listOf(
+                    "Visibility" to "${data.current.vis_km} km",
+                    "Time" to data.location.localtime.split(" ")[1],
+                    "Date" to data.location.localtime.split(" ")[0]
+                )
+            )
         }
-        Spacer(modifier = Modifier.height(16.dp))
+    }
+}
+
+@Composable
+fun WeatherDetailsRow(items: List<Pair<String, String>>) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceAround
+    ) {
+        items.forEach { (title, value) ->
+            CurrentWeatherItems(title = title, data = value)
+        }
     }
 }
 
