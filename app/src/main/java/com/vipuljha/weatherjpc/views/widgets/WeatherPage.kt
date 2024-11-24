@@ -1,4 +1,4 @@
-package com.vipuljha.weatherjpc
+package com.vipuljha.weatherjpc.views.widgets
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.vipuljha.weatherjpc.R
 import com.vipuljha.weatherjpc.models.WeatherModel
 import com.vipuljha.weatherjpc.utils.NetworkResponse
 import com.vipuljha.weatherjpc.utils.Utils

@@ -1,4 +1,4 @@
-package com.vipuljha.weatherjpc
+package com.vipuljha.weatherjpc.views.activities
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -20,6 +20,7 @@ import com.vipuljha.weatherjpc.data.repositories.WeatherRepository
 import com.vipuljha.weatherjpc.ui.theme.WeatherJPCTheme
 import com.vipuljha.weatherjpc.viewmodels.WeatherViewModel
 import com.vipuljha.weatherjpc.viewmodels.WeatherViewModelFactory
+import com.vipuljha.weatherjpc.views.widgets.WeatherPage
 
 class MainActivity : ComponentActivity() {
     private val viewModel: WeatherViewModel by viewModels {
