@@ -13,18 +13,18 @@ import retrofit2.Response
 class WeatherViewModel(private val repository: WeatherRepository) : ViewModel() {
 
     private val _weather =
-        MutableStateFlow<NetworkResponse<WeatherModel>>(NetworkResponse.Loading())
+        MutableStateFlow<NetworkResponse<WeatherModel>>(NetworkResponse.Loading)
 
     val weather: StateFlow<NetworkResponse<WeatherModel>> = _weather
 
 
     fun getWeather(keyword: String) = viewModelScope.launch {
-        _weather.value = NetworkResponse.Loading()
+        _weather.value = NetworkResponse.Loading
         try {
             val response = repository.getWeather(keyword)
             _weather.value = handleResponse(response)
         } catch (e: Exception) {
-            _weather.value = NetworkResponse.Error(message = e.message)
+            _weather.value = NetworkResponse.Error(message = e.message ?: "Something went wrong!")
         }
     }
 

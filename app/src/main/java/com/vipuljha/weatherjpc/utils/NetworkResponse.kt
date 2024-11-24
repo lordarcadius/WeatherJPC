@@ -1,10 +1,7 @@
 package com.vipuljha.weatherjpc.utils
 
-sealed class NetworkResponse<T>(
-    val data: T? = null,
-    val message: String? = null
-) {
-    class Success<T>(data: T) : NetworkResponse<T>(data)
-    class Error<T>(data: T? = null, message: String?) : NetworkResponse<T>(data, message)
-    class Loading<T>() : NetworkResponse<T>()
+sealed class NetworkResponse<out T> {
+    data class Success<out T>(val data : T) : NetworkResponse<T>()
+    data class Error(val message : String) : NetworkResponse<Nothing>()
+    data object Loading : NetworkResponse<Nothing>()
 }
