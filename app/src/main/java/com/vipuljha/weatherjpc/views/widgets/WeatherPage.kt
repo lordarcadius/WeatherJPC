@@ -21,16 +21,23 @@ import com.vipuljha.weatherjpc.models.WeatherModel
 import com.vipuljha.weatherjpc.utils.NetworkResponse
 import com.vipuljha.weatherjpc.utils.Utils
 import com.vipuljha.weatherjpc.viewmodels.WeatherViewModel
+import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
 @Composable
 fun WeatherPage(viewModel: WeatherViewModel) {
     var city by remember { mutableStateOf("New Delhi") }
+    var debounceCity by remember { mutableStateOf(city) } // To track debounced input
     val keyboardController = LocalSoftwareKeyboardController.current
     val weatherState by viewModel.weather.collectAsState()
 
-    // Automatically load weather on launch
-    LaunchedEffect(city) { viewModel.getWeather(city) }
+    // Debounce logic
+    LaunchedEffect(debounceCity) {
+        delay(500) // Wait for 500ms before making the API call
+        if (debounceCity.isNotEmpty()) {
+            viewModel.getWeather(debounceCity)
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -40,8 +47,9 @@ fun WeatherPage(viewModel: WeatherViewModel) {
     ) {
         CitySearchField(city = city, onCityChanged = {
             city = it
+            debounceCity = it // Update the debounced value
         }) {
-            viewModel.getWeather(city)
+            debounceCity = city // Trigger immediate search on button click
             keyboardController?.hide()
         }
 
