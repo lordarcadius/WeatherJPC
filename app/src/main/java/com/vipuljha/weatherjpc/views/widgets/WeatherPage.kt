@@ -32,7 +32,12 @@ fun WeatherPage(viewModel: WeatherViewModel) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
+            .padding(12.dp)
+            .windowInsetsPadding(
+                WindowInsets
+                    .statusBars
+                    .only(WindowInsetsSides.Top)
+            ),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         CitySearchField(city = city, onCityChanged = {

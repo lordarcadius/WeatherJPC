@@ -33,14 +33,6 @@ class MainActivity : ComponentActivity() {
         setContent {
             WeatherJPCTheme {
                 Surface(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(12.dp)
-                        .windowInsetsPadding(
-                            WindowInsets
-                                .statusBars
-                                .only(WindowInsetsSides.Top)
-                        ),
                     color = MaterialTheme.colorScheme.background,
                 ) {
                     WeatherPage(viewModel)
