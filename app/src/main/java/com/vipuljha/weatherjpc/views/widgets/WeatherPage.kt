@@ -1,6 +1,7 @@
 package com.vipuljha.weatherjpc.views.widgets
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Search
@@ -26,7 +27,6 @@ import kotlin.math.roundToInt
 @Composable
 fun WeatherPage(viewModel: WeatherViewModel) {
     var city by remember { mutableStateOf("New Delhi") }
-    val keyboardController = LocalSoftwareKeyboardController.current
     val weatherState by viewModel.weather.collectAsState()
 
     Column(
@@ -43,10 +43,7 @@ fun WeatherPage(viewModel: WeatherViewModel) {
         CitySearchField(city = city, onCityChanged = {
             city = it
             viewModel.updateCity(city)
-        }) {
-            viewModel.updateCity(city)
-            keyboardController?.hide()
-        }
+        })
 
         Spacer(Modifier.height(8.dp))
 
@@ -62,32 +59,24 @@ fun WeatherPage(viewModel: WeatherViewModel) {
 fun CitySearchField(
     city: String,
     onCityChanged: (String) -> Unit,
-    onSearchClicked: () -> Unit
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        OutlinedTextField(
-            modifier = Modifier.weight(1f),
-            value = city,
-            onValueChange = onCityChanged,
-            maxLines = 1,
-            label = { Text(stringResource(R.string.search_city)) }
-        )
-        Spacer(Modifier.width(20.dp))
-        IconButton(onClick = onSearchClicked) {
+    OutlinedTextField(
+        value = city,
+        onValueChange = onCityChanged,
+        maxLines = 1,
+        label = { Text(stringResource(R.string.search_city)) },
+        leadingIcon = {
             Icon(
                 imageVector = Icons.Default.Search,
-                modifier = Modifier.size(40.dp),
                 contentDescription = stringResource(R.string.search)
             )
-        }
-    }
+        },
+        modifier = Modifier
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp)
+    )
 }
+
 
 @Composable
 fun LoadingIndicator() {
